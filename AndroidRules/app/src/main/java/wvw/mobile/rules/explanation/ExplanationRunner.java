@@ -23,8 +23,7 @@ import com.hp.hpl.jena.reasoner.rulesys.RuleDerivation;
 
 public class ExplanationRunner {
 
-    // NOTE: This should be changed
-    String answer = "";
+
     public static void print(String message) {
         Log.d("Explanation-Runner", message);
     }
@@ -116,7 +115,6 @@ public class ExplanationRunner {
 
             // After going through the matches, we now print the rule that the matches matched to.
             // TODO: Match match triples with the rule to make it more readable?
-            // TODO: Enable support for let rules.
             results += tabOffset(tabs) + "And paired them with the following rule: \n" ;
             results += tabOffset(tabs) + derivation.getRule().toString() + "\n";
             results += tabOffset(tabs) + "to reach this conclusion.\n";
