@@ -15,6 +15,6 @@ public abstract class Explainer {
 
     public Explainer(){}
 
-    public abstract String fullExplanation();
-    
+    public abstract String GetFullExplanation();
+
 }
