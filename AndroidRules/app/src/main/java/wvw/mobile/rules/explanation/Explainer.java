@@ -2,8 +2,10 @@ package wvw.mobile.rules.explanation;
 
 import com.hp.hpl.jena.rdf.model.InfModel;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.reasoner.Reasoner;
+import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
+import com.hp.hpl.jena.reasoner.rulesys.Rule;
 
-import wvw.mobile.rules.eyebrow.Reasoner;
 
 /**
  * The <code>Explainer</code> component produces user-friendly
@@ -19,7 +21,6 @@ import wvw.mobile.rules.eyebrow.Reasoner;
 public class Explainer {
 
     private Model baseModel;
-    private Reasoner reasoner;
     private String rules;
 
     /**
@@ -33,16 +34,8 @@ public class Explainer {
         return this.baseModel;
     }
 
-    public void Model(Model model){
+    public void Model(Model model) {
         this.baseModel = model;
-    }
-
-    public Reasoner Reasoner(){
-        return this.reasoner;
-    }
-
-    public void Reasoner(Reasoner reasoner){
-        this.reasoner = reasoner;
     }
 
     public String Rules(){
@@ -64,4 +57,16 @@ public class Explainer {
         return "Not Implemented Yet";
     }
 
+    ///endregion
+
+    /**
+     * Runs a reasoner on the Linked Data. Guarantees derivations are
+     * stored.
+     * @return The InfModel derived from the reasoner.
+     */
+    private InfModel generateInfModel(){
+        Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
+        reasoner.setDerivationLogging(true);
+        return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
+    }
 }
