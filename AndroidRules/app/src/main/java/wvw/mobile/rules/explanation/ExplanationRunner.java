@@ -140,21 +140,29 @@ public class ExplanationRunner {
         print("Hello\n" + answer);
     }
 
+    // TODO: implement contrastive reasoning
+    // https://jena.apache.org/documentation/inference/#RULEsyntax for specifics on rule syntax
+    //public static void constrastiveReasoning(Model baseModel, InfModel inf, )
     public static void run () {
-        InfModel infModel = ModelFactory.getAIMEInfModel();
+        InfModel infModel = ModelFactory.getAIMEInfModelMultipleFood();
+
         Resource person  = infModel.getResource(ModelFactory.getPersonURI());
         Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
+        Property sugars = infModel.getProperty("http://example.com/sugars");
+        Resource observation = infModel.getResource(ModelFactory.getObservavtionURI());
+
         RDFNode value = null;
-        StmtIterator itr = infModel.listStatements(person, totalSugars,value);
+        StmtIterator itr = infModel.listStatements(person, totalSugars, value);
         while(itr.hasNext()){
             Statement s = itr.next();
             value = s.getObject();
+            print(s.toString());
         }
 
-		printReasoning(ModelFactory.getTransitiveBaseModel(),
-				infModel,
-				person,
-                totalSugars,
-                value);
+//		printReasoning(ModelFactory.getAIMEBaseModelMultipleFood(),
+//				infModel,
+//                observation,
+//                sugars,
+//                value);
     }
 }

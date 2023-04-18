@@ -37,6 +37,10 @@ public class ModelFactory {
         return personURI;
     }
 
+    public static String getObservavtionURI() {
+        return observationURI;
+    }
+
     public static Model getTransitiveBaseModel() {
 
         Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
@@ -133,6 +137,84 @@ public class ModelFactory {
         return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
     }
 
+    public static Model getAIMEBaseModelMultipleFood() {
+
+        // creating the model used in AIME tutorial with Person, Observe:eat usda:Apple
+        Model model = com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel();
+
+        // create the resource
+        Resource user = model.createResource(personURI);
+        Resource observation1 = model.createResource(observationURI);
+        Resource observation2 = model.createResource(observationURI);
+        user.addLiteral(model.createProperty(ex + "totalSugars"), model.createTypedLiteral(new BigDecimal(0)));
+
+        // usda food, User recored food weight, weight unit
+        Resource usdaApple = model.createResource("http://idea.rpi.edu/heals/kb/usda#09003");
+        Resource usdaBanana = model.createResource("http://idea.rpi.edu/heals/kb/usda#09040");
+        Literal appleWeight = model.createTypedLiteral(new BigDecimal(83)); // xsd:decimal
+        Literal bananaWeight = model.createTypedLiteral(new BigDecimal(118)); // xsd:decimal
+        String unitText   = "g";
+        // add the property
+        user.addProperty(model.createProperty(ateURI), observation1);
+        user.addProperty(model.createProperty(ateURI), observation2);
+        user.addProperty(model.createProperty(rdfURI + "type"), user);
+
+        observation1.addProperty(model.createProperty(variableMeasuredURI), usdaApple);
+        usdaApple.addLiteral(model.createProperty(usdaURI + "sugar"), model.createTypedLiteral(new BigDecimal(10)));
+        usdaApple.addLiteral(model.createProperty(weightURI), appleWeight);
+
+        observation2.addProperty(model.createProperty(variableMeasuredURI), usdaBanana);
+        usdaBanana.addLiteral(model.createProperty(usdaURI + "sugar"), model.createTypedLiteral(new BigDecimal(12)));
+        usdaBanana.addLiteral(model.createProperty(weightURI), bananaWeight);
+
+        // set prefix for better printing
+        model.setNsPrefix( "schema", schemaURI );
+        model.setNsPrefix( "ex", ex );
+        model.setNsPrefix( "foaf", foaf );
+        model.setNsPrefix( "usda", usdaURI );
+        return model;
+    }
+    public static InfModel getAIMEInfModelMultipleFood() {
+        Model baseModel = getAIMEBaseModelMultipleFood();
+
+        // Create the ruleset from AIME tutorial
+        PrintUtil.registerPrefix("schema", schemaURI);
+        PrintUtil.registerPrefix("usda", usdaURI);
+        PrintUtil.registerPrefix("rdf", rdfURI);
+        PrintUtil.registerPrefix("ex", ex);
+        PrintUtil.registerPrefix("foaf", foaf);
+
+        // https://jena.apache.org/documentation/inference/#RULEsyntax for specifics on rule syntax
+        String rule1 = "[rule1: ";
+        rule1 += "( ?var schema:variableMeasured ?foodstuff ) ";
+        rule1 += "( ?foodstuff schema:weight ?weight ) ";
+        rule1 += "( ?foodstuff usda:sugar ?sugarsPer100g ) ";
+        rule1 += "quotient(?weight, '100.0'^^http://www.w3.org/2001/XMLSchema#float, ?scaledWeight) ";
+        rule1 += "product(?scaledWeight, ?sugarsPer100g, ?sugars) ";
+        rule1 += "-> (?var ex:sugars ?sugars)";
+        rule1 += "]";
+        String rule2 = "[rule2: ";
+        rule2 += "( ?user rdf:type foaf:Person) ";
+        rule2 += "( ?user ex:ate ?food) ";
+        rule2 += "( ?food ex:sugars ?sugar) ";
+        rule2 += "sum(?sugar, '0.0'^^http://www.w3.org/2001/XMLSchema#float, ?totalSugars) ";
+        rule2 += "-> ( ?user ex:totalSugars ?totalSugars ) ";
+        rule2 += "]";
+        String rule3 = "[rule3: ";
+//        rule3 += "( ?user rdf:type foaf:Person) ";
+//        rule3 += "listMapAsObject(?s, ?p ?l) ";
+//        rule3 += "print(?l)";
+        rule3 += "]";
+
+        String rules = rule1 + " " + rule2 + " " + rule3;
+
+        Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
+
+        reasoner.setDerivationLogging(true);
+        InfModel infModel = com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
+        infModel.write(System.out);
+        return infModel;
+    }
 }
 
 
