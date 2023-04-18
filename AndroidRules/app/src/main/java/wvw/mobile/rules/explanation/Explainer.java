@@ -15,6 +15,8 @@ public abstract class Explainer {
 
     public Explainer(){}
 
+    // TODO: Change this to be accomodating for multiple different types
+    //       of explanations.
     public abstract String GetFullExplanation();
 
 }
