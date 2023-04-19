@@ -140,11 +140,8 @@ public class ExplanationRunner {
         print("Hello\n" + answer);
     }
 
-    // TODO: implement contrastive reasoning
-    // https://jena.apache.org/documentation/inference/#RULEsyntax for specifics on rule syntax
-    //public static void constrastiveReasoning(Model baseModel, InfModel inf, )
     public static void run () {
-        InfModel infModel = ModelFactory.getAIMEInfModelMultipleFood();
+        InfModel infModel = ModelFactory.getAIMEInfModel();
 
         Resource person  = infModel.getResource(ModelFactory.getPersonURI());
         Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
