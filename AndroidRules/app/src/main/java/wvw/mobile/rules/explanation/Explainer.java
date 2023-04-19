@@ -1,5 +1,8 @@
 package wvw.mobile.rules.explanation;
 
+
+import android.util.Log;
+
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.InfModel;
@@ -18,6 +21,7 @@ import com.hp.hpl.jena.reasoner.rulesys.Rule;
 import com.hp.hpl.jena.reasoner.rulesys.RuleDerivation;
 
 import java.util.Iterator;
+import java.util.List;
 
 
 /**
@@ -132,21 +136,66 @@ public class Explainer {
         return results;
     }
 
-    public String GetFullContextualExplanation() {
-        return "Not Implemented Yet";
+    /**
+     * Produces a single-sentence contextual explanation as to how the inputted statement
+     * was derived.
+     * @param resource The resource of the statement.
+     * @param property The property of the statement.
+     * @param object The object of the statement.
+     * @return
+     */
+    public String GetSimpleContextualExplanation(Object resource, Object property, Object object){
+        StringBuilder explanation = new StringBuilder("");
+
+        InfModel model = generateInfModel(baseModel);
+        StmtIterator itr = model
+                .listStatements((Resource)resource, (Property) property, (RDFNode) object);
+
+        while(itr.hasNext()){
+            explanation.append(generateSimpleContextualExplanation(itr.next(), model));
+            explanation.append("\n\n");
+        }
+        return explanation.toString();
     }
 
+    /**
+     * Produces a brief user-readable contextual explanation of how the inputted statement was
+     * concluded. Based on the Contextual Ontology:
+     * https://tetherless-world.github.io/explanation-ontology/modeling/#casebased/
+     * @param resource The resource of the statement.
+     * @param property The property of the statement.
+     * @param object The object of the statement.
+     * @return a shallow trace through the derivations of a statement,
+     * formatted in a contextual explanation.
+     */
+    public String GetShallowContextualExplanation(Object resource, Object property, Object object) {
+        StringBuilder explanation = new StringBuilder("");
+
+        // Get the derivations produced by the reasoner.
+        InfModel model = generateInfModel(baseModel);
+        StmtIterator itr = model
+                .listStatements((Resource)resource, (Property) property, (RDFNode) object);
+
+        // Append all explanations to the results.
+        while(itr.hasNext()){
+            explanation.append(generateShallowTrace(itr.next(), model));
+        }
+
+        return explanation.toString();
+    }
     ///endregion
+
+    ///region Contextual Reasoning Helper Methods
 
     /**
      * Runs a reasoner on the Linked Data. Guarantees derivations are
      * stored.
      * @return The InfModel derived from the reasoner.
      */
-    private InfModel generateInfModel(Model aBaseModel){
+    private InfModel generateInfModel(Model baseModel){
         Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
         reasoner.setDerivationLogging(true);
-        return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, aBaseModel);
+        return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
     }
 
     public static void run () {
@@ -169,4 +218,98 @@ public class Explainer {
 //            System.out.println(AIME_Explainer.GetFullContrastiveExplanation(s, ModelFactory.getAIMEBaseModel()));
 //        }
     }
+
+    /**
+     * Generates a statement using the URIS present in the triple.
+     * @param triple
+     * @return A basic statement
+     */
+    private Statement generateStatement(Triple triple){
+        Resource subject = ResourceFactory.createResource(triple.getSubject().getURI());
+        Property property = ResourceFactory.createProperty(triple.getPredicate().getURI());
+        Node obj = triple.getObject();
+        if (obj.isLiteral()){
+            Literal l = ResourceFactory.createTypedLiteral(obj.getLiteralValue().toString(), obj.getLiteralDatatype());
+            return ResourceFactory.createStatement(subject, property, l);
+        }
+        if (!obj.isLiteral()){
+            Resource matchObject = ResourceFactory.createResource(triple.getObject().getURI());
+            return ResourceFactory.createStatement(subject, property, matchObject);
+        }
+        // Should never reach here.
+        return null;
+    }
+
+    /**
+     * Generates a shallow Contextual explanation.
+     * @param s The statement being derived
+     * @param model The InfModel containing the user-set and reasoner-derived knowledge graph.
+     * @return A shallow contextual explanation.
+     */
+    private String generateShallowTrace(Statement s, InfModel model){
+        StringBuilder explanation = new StringBuilder("(");
+
+        Iterator<Derivation> itr = model.getDerivation(s);
+
+        while(itr.hasNext()){
+            RuleDerivation derivation = (RuleDerivation) itr.next();
+            explanation.append(derivation.getConclusion().toString());
+            explanation.append("\n");
+            explanation.append("( is based on rule ");
+            // Print the rule name:
+            explanation.append(derivation.getRule().toShortString());
+            explanation.append("\n");
+
+            explanation.append("and is in relation to the following situation: \n");
+            for (Triple match : derivation.getMatches()){
+                Statement binding = generateStatement(match);
+                explanation.append(s.toString());
+                explanation.append("\n");
+
+            }
+
+        }
+
+        explanation.append(")");
+        return explanation.toString();
+    }
+
+    /**
+     * Generates a simple contextual explanation for a statement, given the
+     * model containing the derivations.
+     * @param s
+     * @param model
+     * @return
+     */
+    private String generateSimpleContextualExplanation(Statement s, InfModel model){
+        StringBuilder explanation = new StringBuilder("");
+
+        Iterator<Derivation> itr = model.getDerivation(s);
+
+        while(itr.hasNext()){
+            RuleDerivation derivation = (RuleDerivation) itr.next();
+            explanation.append(derivation.getConclusion().toString());
+            explanation.append(" because ");
+
+            List<Triple> matches = derivation.getMatches();
+            int matchIndex = 0;
+            for (Triple match : matches){
+                Statement binding = generateStatement(match);
+                explanation.append(binding.getSubject().toString());
+                explanation.append(" ");
+                explanation.append(binding.getPredicate().toString());
+                explanation.append( " ");
+                explanation.append(binding.getObject().toString());
+                if (matchIndex < matches.size()-1){
+                    explanation.append(", ");
+                }
+
+                matchIndex++;
+            }
+
+        }
+        explanation.append(".");
+        return explanation.toString();
+    }
+    ///endregion
 }

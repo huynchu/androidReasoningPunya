@@ -20,6 +20,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.reasoner.Derivation;
 import com.hp.hpl.jena.reasoner.rulesys.RuleDerivation;
+import com.hp.hpl.jena.util.PrintUtil;
 
 public class ExplanationRunner {
 
@@ -71,7 +72,6 @@ public class ExplanationRunner {
             for (Triple match : derivation.getMatches()) {
 
                 // Use the URIs to generate a statement, so we can search the base model for the statement.
-                // TODO: Handle more complex triples than just ones with only URIs...
                 Resource matchResource = ResourceFactory.createResource(match.getSubject().getURI());
                 Property matchProperty = ResourceFactory.createProperty(match.getPredicate().getURI());
 
@@ -142,24 +142,28 @@ public class ExplanationRunner {
 
     public static void run () {
         InfModel infModel = ModelFactory.getAIMEInfModel();
+        // Create model...
+        PrintUtil.registerPrefix("ex", ModelFactory.getGlobalURI());
+        String rules = "[transitiveRule: (?a ex:equals ?b) (?b ex:equals ?c) -> (?a ex:equals ?c)]";
+        Explainer explainer = new Explainer();
+        explainer.Model(ModelFactory.getTransitiveBaseModel());
+        explainer.Rules(rules);
 
-        Resource person  = infModel.getResource(ModelFactory.getPersonURI());
-        Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
-        Property sugars = infModel.getProperty("http://example.com/sugars");
-        Resource observation = infModel.getResource(ModelFactory.getObservavtionURI());
 
-        RDFNode value = null;
-        StmtIterator itr = infModel.listStatements(person, totalSugars, value);
-        while(itr.hasNext()){
-            Statement s = itr.next();
-            value = s.getObject();
-            print(s.toString());
-        }
+        String results = explainer.GetShallowContextualExplanation(
+                explainer.Model().getResource("A"),
+                explainer.Model().getProperty("http://example.com/equals"),
+                explainer.Model().getResource("D")
+        );
 
-//		printReasoning(ModelFactory.getAIMEBaseModelMultipleFood(),
-//				infModel,
-//                observation,
-//                sugars,
-//                value);
+        /*
+        String results = explainer.GetSimpleContextualExplanation(
+                explainer.Model().getResource("A"),
+                explainer.Model().getProperty("http://example.com/equals"),
+                explainer.Model().getResource("D")
+        );
+        */
+        print("\n" + results);
+
     }
 }
