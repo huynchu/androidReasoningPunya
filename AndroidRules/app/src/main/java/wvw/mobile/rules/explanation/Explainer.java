@@ -36,7 +36,10 @@ import java.util.List;
 @SimpleObject
  */
 public class Explainer {
-
+    // TODO: Remove after completed.
+    public static void print(String message) {
+        Log.d("Explanation-Runner", message);
+    }
     private Model baseModel;
     private String rules;
 
@@ -64,13 +67,20 @@ public class Explainer {
     }
 
     ///endregion
+
     ///region Methods
 
-    // TODO: implement contrastive reasoning
-    // https://jena.apache.org/documentation/inference/#RULEsyntax for specifics on rule syntax
+    /**
+     * Genrates a full contrastive explanation based on the derivations produced
+     * by the reasoner.
+     * @param statement
+     * @param otherBaseModel
+     * @return
+     */
     public String GetFullContrastiveExplanation(Statement statement, Model otherBaseModel){
         InfModel thisInfModel = generateInfModel(baseModel);
         InfModel otherInfModel = generateInfModel(otherBaseModel);
+        print(thisInfModel.toString());
 
         String results = "";
 
@@ -80,7 +90,6 @@ public class Explainer {
         Iterator<Derivation> otherDerivItr = otherInfModel.getDerivation(statement);
 
         while (thisDerivItr.hasNext()) {
-
             RuleDerivation thisDerivation = (RuleDerivation) thisDerivItr.next();
             RuleDerivation otherDerivation = null;
             if (otherDerivItr.hasNext()) {
@@ -198,27 +207,6 @@ public class Explainer {
         return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
     }
 
-    public static void run () {
-        System.out.println("AIME_Explainer -- ContrastiveExplanation");
-//        InfModel infModel = ModelFactory.getAIMEInfModel();
-//
-//        Explainer AIME_Explainer = new Explainer();
-//        AIME_Explainer.Model(ModelFactory.getAIMEBaseModel());
-//
-//        Resource person  = infModel.getResource(ModelFactory.getPersonURI());
-//        Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
-//        Property sugars = infModel.getProperty("http://example.com/sugars");
-//        Resource observation = infModel.getResource(ModelFactory.getObservavtionURI());
-//        RDFNode value = null;
-//
-//        StmtIterator itr = infModel.listStatements(person, totalSugars, value);
-//        while(itr.hasNext()) {
-//            Statement s = itr.next();
-//            System.out.println("AIME_Explainer -- ContrastiveExplanation");
-//            System.out.println(AIME_Explainer.GetFullContrastiveExplanation(s, ModelFactory.getAIMEBaseModel()));
-//        }
-    }
-
     /**
      * Generates a statement using the URIS present in the triple.
      * @param triple
@@ -247,7 +235,7 @@ public class Explainer {
      * @return A shallow contextual explanation.
      */
     private String generateShallowTrace(Statement s, InfModel model){
-        StringBuilder explanation = new StringBuilder("(");
+        StringBuilder explanation = new StringBuilder("");
 
         Iterator<Derivation> itr = model.getDerivation(s);
 
@@ -263,7 +251,7 @@ public class Explainer {
             explanation.append("and is in relation to the following situation: \n");
             for (Triple match : derivation.getMatches()){
                 Statement binding = generateStatement(match);
-                explanation.append(s.toString());
+                explanation.append(binding.toString());
                 explanation.append("\n");
 
             }
