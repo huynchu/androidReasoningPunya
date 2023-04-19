@@ -36,10 +36,7 @@ import java.util.List;
 @SimpleObject
  */
 public class Explainer {
-    // TODO: Remove after completed.
-    public static void print(String message) {
-        Log.d("Explanation-Runner", message);
-    }
+
     private Model baseModel;
     private String rules;
 

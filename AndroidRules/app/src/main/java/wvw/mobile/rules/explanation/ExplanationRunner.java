@@ -85,7 +85,7 @@ public class ExplanationRunner {
                 explainer.Model().getResource("D")
         );
         print("\n" + results);
-        /*
+
         results = explainer.GetSimpleContextualExplanation(
                 explainer.Model().getResource("A"),
                 explainer.Model().getProperty("http://example.com/equals"),
@@ -93,7 +93,7 @@ public class ExplanationRunner {
         );
 
         print("\n" + results);
-        */
+
     }
 
     public static void run () {
