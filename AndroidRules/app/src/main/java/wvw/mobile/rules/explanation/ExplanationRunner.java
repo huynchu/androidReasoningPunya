@@ -141,6 +141,7 @@ public class ExplanationRunner {
     }
 
     public static void run () {
+        /*
         InfModel infModel = ModelFactory.getAIMEInfModel();
         // Create model...
         PrintUtil.registerPrefix("ex", ModelFactory.getGlobalURI());
@@ -149,6 +150,26 @@ public class ExplanationRunner {
         explainer.Model(ModelFactory.getTransitiveBaseModel());
         explainer.Rules(rules);
 
+        Resource person  = infModel.getResource(ModelFactory.getPersonURI());
+        Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
+        Property sugars = infModel.getProperty("http://example.com/sugars");
+        Resource observation = infModel.getResource(ModelFactory.getObservavtionURI());
+
+        RDFNode value = null;
+
+        printReasoning(ModelFactory.getAIMEBaseModel(),
+                ModelFactory.getAIMEInfModel(),
+                person,
+                totalSugars,
+                value
+        );
+        */
+        // Create model...
+        PrintUtil.registerPrefix("ex", ModelFactory.getGlobalURI());
+        String rules = "[transitiveRule: (?a ex:equals ?b) (?b ex:equals ?c) -> (?a ex:equals ?c)]";
+        Explainer explainer = new Explainer();
+        explainer.Model(ModelFactory.getTransitiveBaseModel());
+        explainer.Rules(rules);
 
         String results = explainer.GetShallowContextualExplanation(
                 explainer.Model().getResource("A"),
@@ -156,14 +177,14 @@ public class ExplanationRunner {
                 explainer.Model().getResource("D")
         );
 
-        /*
-        String results = explainer.GetSimpleContextualExplanation(
+        print("\n" + results);
+        results = explainer.GetSimpleContextualExplanation(
                 explainer.Model().getResource("A"),
                 explainer.Model().getProperty("http://example.com/equals"),
                 explainer.Model().getResource("D")
         );
-        */
-        print("\n" + results);
+
+        //print("\n" + results);
 
     }
 }

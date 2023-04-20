@@ -263,7 +263,7 @@ public class Explainer {
             explanation.append("and is in relation to the following situation: \n");
             for (Triple match : derivation.getMatches()){
                 Statement binding = generateStatement(match);
-                explanation.append(s.toString());
+                explanation.append(binding.toString());
                 explanation.append("\n");
 
             }
