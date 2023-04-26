@@ -185,6 +185,22 @@ public class ExplanationRunner {
         );
 
         //print("\n" + results);
+        Explainer explainer2 = new Explainer();
+        explainer2.Model(ModelFactory.getAIMEBaseModel());
+        explainer2.Rules(ModelFactory.getAIMERules());
 
+        InfModel infModel = ModelFactory.getAIMEInfModel();
+
+        Resource person  = infModel.getResource(ModelFactory.getPersonURI());
+        Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
+
+        StmtIterator itr = infModel.listStatements(person, totalSugars, (RDFNode) null);
+
+        String res = "AIME_Explainer -- ContrastiveExplanation\n";
+        while(itr.hasNext()) {
+            Statement s = itr.next();
+            res += explainer2.GetFullCounterfactualExplanation(s, ModelFactory.getAIMEBaseModelBanana());
+        }
+        print(res);
     }
 }

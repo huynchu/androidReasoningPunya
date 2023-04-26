@@ -68,67 +68,82 @@ public class Explainer {
 
     // TODO: implement contrastive reasoning
     // https://jena.apache.org/documentation/inference/#RULEsyntax for specifics on rule syntax
-    public String GetFullContrastiveExplanation(Statement statement, Model otherBaseModel){
+    public String GetFullCounterfactualExplanation(Statement statement, Model otherBaseModel){
         InfModel thisInfModel = generateInfModel(baseModel);
         InfModel otherInfModel = generateInfModel(otherBaseModel);
 
+        System.out.println("Statement input: " + statement.toString());
         String results = "";
+        StmtIterator itr = thisInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
+        StmtIterator itr2 = otherInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
 
+//        while (itr.hasNext() && itr2.hasNext()) {
+//            Statement s1 = itr.next();
+//            Statement s2 = itr2.next();
+//
+//            Iterator<Derivation> thisDerivItr = thisInfModel.getDerivation(s1);
+//            Iterator<Derivation> otherDerivItr = otherInfModel.getDerivation(s2);
+//        }
         // Find the triples (matches) and rule that was used to
         // assert this statement, if it exists in the infModel.
         Iterator<Derivation> thisDerivItr = thisInfModel.getDerivation(statement);
         Iterator<Derivation> otherDerivItr = otherInfModel.getDerivation(statement);
-
+//
         while (thisDerivItr.hasNext()) {
-
+            System.out.println("Hello");
+//          // This model derivation
             RuleDerivation thisDerivation = (RuleDerivation) thisDerivItr.next();
             RuleDerivation otherDerivation = null;
+
+//          // Complete derivation match
             if (otherDerivItr.hasNext()) {
                 otherDerivation = (RuleDerivation) otherDerivItr.next();
             }
-
+            // Partial derivation match (same subject, predicate but different object
+            else if (itr2.hasNext()) {
+                Statement otherMatch = itr2.next();
+                otherDerivItr = otherInfModel.getDerivation(otherMatch);
+                otherDerivation = (RuleDerivation) otherDerivItr.next();
+////                System.out.println("Other Statement: " + otherMatch.toString());
+////                System.out.println("Other RuleDerivation: " + otherDerivation.toString());
+            }
             Triple thisConclusion = thisDerivation.getConclusion();
             Triple otherConclusion = null;
-
-            if (otherDerivation != null) {
+            if (otherDerivation != null)
                 otherConclusion = otherDerivation.getConclusion();
-            }
+
+//            System.out.println("This conclusion: " + thisConclusion.toString());
+//            System.out.println("Other conclusion: " + otherConclusion.toString());
 
             if (otherConclusion == null) {
                 results += "This model concluded: " + thisConclusion.toString() + "\n";
                 results += "Alternate model didn't conclude anything.\n";
+                System.out.print(results);
                 return results;
-            }
-            else if (thisConclusion.sameAs(otherConclusion.getSubject(),
-                                           otherConclusion.getPredicate(),
-                                           otherConclusion.getObject())) {
+            } else if (thisConclusion.sameAs(otherConclusion.getSubject(),
+                    otherConclusion.getPredicate(),
+                    otherConclusion.getObject())) {
                 results += "Both model concluded: " + thisConclusion.toString() + "\n";
+                for (Triple match : thisDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match);
+                    results += GetFullCounterfactualExplanation(matchStatement, otherBaseModel) + "\n";
+                }
             } else {
-                results += "This model concluded: " + thisConclusion.toString() + "\n";
-                results += "Alternate model concluded: " + otherConclusion.toString() + " instead\n";
-            }
-            System.out.println(results);
-            for (Triple match : thisDerivation.getMatches()) {
-                Resource matchResource = ResourceFactory.createResource(match.getSubject().getURI());
-                Property matchProperty = ResourceFactory.createProperty(match.getPredicate().getURI());
-                Node obj = match.getObject();
-
-                if (!obj.isLiteral()) {
-                    Resource matchObject = ResourceFactory.createResource(match.getObject().getURI());
-                    Statement s = ResourceFactory.createStatement(matchResource, matchProperty, matchObject);
-                    // Assuming it's not in the base model, then the reasoner must have derived that statement...
-                    if (!baseModel.contains(s)) {
-                        // results += " Match: " + s.toString() + " was asserted by the reasoner.\n";
-                        // Recursively trace to find how the reasoner derived that statement.
-                        results += GetFullContrastiveExplanation(s, otherBaseModel) + "\n";
-                    }
-                } else {
-                    Literal l = ResourceFactory.createTypedLiteral(obj.getLiteralValue().toString(), obj.getLiteralDatatype());
-                    Statement s = ResourceFactory.createStatement(matchResource, matchProperty, l);
-                    // Assuming it's not in the base model, then the reasoner must have derived that statement...
-                    if (!baseModel.contains(s)) {
-                        // Recursively trace to find how the reasoner derived that statement.
-                        results += GetFullContrastiveExplanation(s, otherBaseModel) + "\n";
+                results += "This model concluded: " + thisConclusion.toString() + " using Matches: \n";
+                for (Triple match : thisDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match);
+                    results +=  " Match: " + matchStatement.toString() + "\n";
+                }
+                results += "Alternate model concluded: " + otherConclusion.toString() + " instead using Matches: \n";
+                for (Triple match2 : otherDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match2);
+                    results += " Match: " + matchStatement.toString() + "\n";
+                }
+                // Recurse
+                for (Triple match : thisDerivation.getMatches()) {
+                    Statement matchStatement = generateStatement(match);
+                    if (!baseModel.contains(matchStatement)) {
+                        results += GetFullCounterfactualExplanation(matchStatement, otherBaseModel) + "\n";
                     }
                 }
             }
