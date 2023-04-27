@@ -24,7 +24,6 @@ public class WebviewReasonActivity extends AppCompatActivity implements Reasoner
 
         // Starts the explanation runner:
         ExplanationRunner.run();
-        Log.d("android-rules", "Hello World!");
     }
 
     @Override
