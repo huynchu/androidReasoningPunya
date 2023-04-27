@@ -141,29 +141,6 @@ public class ExplanationRunner {
     }
 
     public static void run () {
-        /*
-        InfModel infModel = ModelFactory.getAIMEInfModel();
-        // Create model...
-        PrintUtil.registerPrefix("ex", ModelFactory.getGlobalURI());
-        String rules = "[transitiveRule: (?a ex:equals ?b) (?b ex:equals ?c) -> (?a ex:equals ?c)]";
-        Explainer explainer = new Explainer();
-        explainer.Model(ModelFactory.getTransitiveBaseModel());
-        explainer.Rules(rules);
-
-        Resource person  = infModel.getResource(ModelFactory.getPersonURI());
-        Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
-        Property sugars = infModel.getProperty("http://example.com/sugars");
-        Resource observation = infModel.getResource(ModelFactory.getObservavtionURI());
-
-        RDFNode value = null;
-
-        printReasoning(ModelFactory.getAIMEBaseModel(),
-                ModelFactory.getAIMEInfModel(),
-                person,
-                totalSugars,
-                value
-        );
-        */
         // Create model...
         PrintUtil.registerPrefix("ex", ModelFactory.getGlobalURI());
         String rules = "[transitiveRule: (?a ex:equals ?b) (?b ex:equals ?c) -> (?a ex:equals ?c)]";
@@ -196,7 +173,7 @@ public class ExplanationRunner {
 
         StmtIterator itr = infModel.listStatements(person, totalSugars, (RDFNode) null);
 
-        String res = "AIME_Explainer -- ContrastiveExplanation\n";
+        String res = "AIME_Explainer -- CounterfactualExplanation\n";
         while(itr.hasNext()) {
             Statement s = itr.next();
             res += explainer2.GetFullCounterfactualExplanation(s, ModelFactory.getAIMEBaseModelBanana());
