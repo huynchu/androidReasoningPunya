@@ -66,36 +66,33 @@ public class Explainer {
     ///endregion
     ///region Methods
 
-    // TODO: implement contrastive reasoning
-    // https://jena.apache.org/documentation/inference/#RULEsyntax for specifics on rule syntax
+    /**
+     * @param statement the statement (conclusion) to generate explanation for
+     * @param otherBaseModel the other baseModel to compare this.baseModel to after apply this.rule to both
+     * Generate counterfactual explaination for statement by comparing how this.baseModel reached the conclusion
+     * compared to how otherBaseModel differs(or match) the conclusion by using the same ruleSet, this.rules.
+     * Highlight the difference
+     * @return The InfModel derived from the reasoner.
+     */
     public String GetFullCounterfactualExplanation(Statement statement, Model otherBaseModel){
         InfModel thisInfModel = generateInfModel(baseModel);
         InfModel otherInfModel = generateInfModel(otherBaseModel);
-
-        System.out.println("Statement input: " + statement.toString());
         String results = "";
         StmtIterator itr = thisInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
         StmtIterator itr2 = otherInfModel.listStatements(statement.getSubject(), statement.getPredicate(), (RDFNode) null);
 
-//        while (itr.hasNext() && itr2.hasNext()) {
-//            Statement s1 = itr.next();
-//            Statement s2 = itr2.next();
-//
-//            Iterator<Derivation> thisDerivItr = thisInfModel.getDerivation(s1);
-//            Iterator<Derivation> otherDerivItr = otherInfModel.getDerivation(s2);
-//        }
         // Find the triples (matches) and rule that was used to
         // assert this statement, if it exists in the infModel.
         Iterator<Derivation> thisDerivItr = thisInfModel.getDerivation(statement);
         Iterator<Derivation> otherDerivItr = otherInfModel.getDerivation(statement);
-//
+
         while (thisDerivItr.hasNext()) {
             System.out.println("Hello");
-//          // This model derivation
+            // This model derivation
             RuleDerivation thisDerivation = (RuleDerivation) thisDerivItr.next();
             RuleDerivation otherDerivation = null;
 
-//          // Complete derivation match
+            // Complete derivation match
             if (otherDerivItr.hasNext()) {
                 otherDerivation = (RuleDerivation) otherDerivItr.next();
             }
@@ -104,16 +101,11 @@ public class Explainer {
                 Statement otherMatch = itr2.next();
                 otherDerivItr = otherInfModel.getDerivation(otherMatch);
                 otherDerivation = (RuleDerivation) otherDerivItr.next();
-////                System.out.println("Other Statement: " + otherMatch.toString());
-////                System.out.println("Other RuleDerivation: " + otherDerivation.toString());
             }
             Triple thisConclusion = thisDerivation.getConclusion();
             Triple otherConclusion = null;
             if (otherDerivation != null)
                 otherConclusion = otherDerivation.getConclusion();
-
-//            System.out.println("This conclusion: " + thisConclusion.toString());
-//            System.out.println("Other conclusion: " + otherConclusion.toString());
 
             if (otherConclusion == null) {
                 results += "This model concluded: " + thisConclusion.toString() + "\n";
@@ -213,26 +205,6 @@ public class Explainer {
         return com.hp.hpl.jena.rdf.model.ModelFactory.createInfModel(reasoner, baseModel);
     }
 
-    public static void run () {
-        System.out.println("AIME_Explainer -- ContrastiveExplanation");
-//        InfModel infModel = ModelFactory.getAIMEInfModel();
-//
-//        Explainer AIME_Explainer = new Explainer();
-//        AIME_Explainer.Model(ModelFactory.getAIMEBaseModel());
-//
-//        Resource person  = infModel.getResource(ModelFactory.getPersonURI());
-//        Property totalSugars = infModel.getProperty("http://example.com/totalSugars");
-//        Property sugars = infModel.getProperty("http://example.com/sugars");
-//        Resource observation = infModel.getResource(ModelFactory.getObservavtionURI());
-//        RDFNode value = null;
-//
-//        StmtIterator itr = infModel.listStatements(person, totalSugars, value);
-//        while(itr.hasNext()) {
-//            Statement s = itr.next();
-//            System.out.println("AIME_Explainer -- ContrastiveExplanation");
-//            System.out.println(AIME_Explainer.GetFullContrastiveExplanation(s, ModelFactory.getAIMEBaseModel()));
-//        }
-    }
 
     /**
      * Generates a statement using the URIS present in the triple.
