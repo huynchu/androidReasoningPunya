@@ -183,6 +183,7 @@ public class ModelFactory {
         model.setNsPrefix( "usda", usdaURI );
         return model;
     }
+
     public static InfModel getAIMEInfModelBanana() {
         Model baseModel = getAIMEBaseModelBanana();
 
